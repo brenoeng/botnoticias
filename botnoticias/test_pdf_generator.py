@@ -3,9 +3,6 @@
 from pdf_generator import gerar_pdf
 from datetime import datetime
 
-print("testando brnaches")
-print("testando brnaches")
-
 sample_noticias = [
     {
         "regiao": "Mundo",
