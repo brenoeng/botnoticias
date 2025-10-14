@@ -32,7 +32,7 @@ def gerar_relatorio():
     # 2. Gerar PDF
     nome_arquivo = f"Relatorio_Setorial_Completo_{datetime.now().strftime('%d%m%Y')}.pdf"
     gerar_pdf(todas_noticias, nome_arquivo=nome_arquivo,
-              categoria="Setor de Energia e Petróleo")
+              categoria="Energia e Petróleo")
 
     print(f"Processo finalizado. PDF salvo como: {nome_arquivo}")
 

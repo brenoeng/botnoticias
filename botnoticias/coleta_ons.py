@@ -131,7 +131,8 @@ def get_ons() -> List[Dict]:
                 "link": link,
                 # Data formatada para output
                 "data": f"{dia_str}/{mes_str}/{ano_atual}",
-                "resumo": resumo
+                "resumo": resumo,
+                "categoria": "-"
             })
 
     print(f"Filtro concluído. Encontrados {len(artigos)} artigos recentes.")

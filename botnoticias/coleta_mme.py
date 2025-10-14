@@ -43,11 +43,21 @@ def get_mme() -> List[Dict]:
 
         # Extração do TÍTULO e LINK (sem alterações)
         tag_a = item.find('h2', class_='titulo').find('a')
+        tag_resumo = item.find('span', class_='descricao')
+        # print(item)
+
         if not tag_a:
             continue
 
         titulo = tag_a.get_text(strip=True)
         link = tag_a.get("href")
+
+        # extraindo o resumo, se disponível
+        resumo = tag_resumo.get_text(strip=True).split("-")[-1]
+        tag_categoria = item.find(
+            'div', class_=['subtitulo-noticia', 'categoria-noticia'])
+        categoria = tag_categoria.get_text(
+            strip=True) if tag_categoria else "-"
 
         # 3. Extrair e Converter a DATA
         tag_data = item.find('span', class_='data')
@@ -76,7 +86,9 @@ def get_mme() -> List[Dict]:
                 "fonte": "Ministério de Minas e Energia (MME)",
                 "titulo": titulo,
                 "link": link,
-                "data": data_str  # Mantemos a string original para o output
+                "data": data_str,  # Mantemos a string original para o output
+                "resumo": resumo,
+                "categoria": categoria
             })
         else:
             # Opcional: Para otimizar, se a página estiver em ordem cronológica reversa
@@ -89,7 +101,7 @@ def get_mme() -> List[Dict]:
 
 
 # Exemplo de uso:
-# noticias = get_mme()
+noticias = get_mme()
 # for noticia in noticias:
 #     print(
 #         f"Título: {noticia['titulo']} \n Data: {noticia['data']} \n Link: {noticia['link']}")

@@ -1,2 +1,2 @@
-
-        print(link)
+ categoria = categoria.get_text(strip=True)
+           

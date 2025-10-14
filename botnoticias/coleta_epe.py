@@ -57,6 +57,23 @@ def get_epe() -> List[Dict]:
 
         data_str = tag_data.get_text(strip=True).split()[0]
 
+        # 4. Extrair RESUMO (se disponível)
+        tag_resumo = item.find('p', class_='small')
+        # print(tag_resumo)
+        resumo_com_data = tag_resumo.get_text(strip=True) if tag_resumo else ""
+        # O resumo vem com a data no início, então removemos a data do início
+        resumo_com_tags = resumo_com_data.split("-", 1)[-1]
+        resumo = resumo_com_tags.rsplit(
+            ".", 1)[0] + "." if resumo_com_tags else ""
+
+        # extração CATEGORIA (se disponível)
+        tag_categoria = item.find_all('a', class_='tag-area')
+        # print(tag_categoria)
+        categorias = []
+        for categoria in tag_categoria:
+            categorias.append(categoria.get_text(strip=True))
+        categoria = ", ".join(categorias)
+
         try:
             # Converte a string (ex: "26/09/2025") para um objeto date do Python
             # %d/%m/%Y é o formato para Dia/Mês/Ano
@@ -78,7 +95,9 @@ def get_epe() -> List[Dict]:
                 "fonte": "Empresa de Pesquisa Energética (EPE)",
                 "titulo": titulo,
                 "link": link,
-                "data": data_str  # Mantemos a string original para o output
+                "data": data_str,  # Mantemos a string original para o output
+                "resumo": resumo,  # O EPE não fornece resumo na listagem
+                "categoria": categoria if categoria else "Sem categoria"
             })
         else:
             # Opcional: Para otimizar, se a página estiver em ordem cronológica reversa
@@ -91,7 +110,7 @@ def get_epe() -> List[Dict]:
 
 
 # Exemplo de uso:
-# noticias = get_epe()
+noticias = get_epe()
 # for noticia in noticias:
 #     print(
 #         f"Título: {noticia['titulo']} \n Data: {noticia['data']} \n Link: {noticia['link']}")

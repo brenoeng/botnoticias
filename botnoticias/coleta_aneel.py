@@ -56,6 +56,14 @@ def get_aneel() -> List[Dict]:
 
         data_str = tag_data.get_text(strip=True)
 
+        tag_resumo = item.find('span', class_='descricao')
+        # extraindo o resumo, se disponível
+        resumo = tag_resumo.get_text(strip=True).split("-")[-1]
+        tag_categoria = item.find(
+            'div', class_=['subtitulo-noticia', 'categoria-noticia'])
+        categoria = tag_categoria.get_text(
+            strip=True) if tag_categoria else "-"
+
         try:
             # Converte a string (ex: "26/09/2025") para um objeto date do Python
             # %d/%m/%Y é o formato para Dia/Mês/Ano
@@ -76,7 +84,9 @@ def get_aneel() -> List[Dict]:
                 "fonte": "Agência Nacional de Energia Elétrica (ANEEL)",
                 "titulo": titulo,
                 "link": link,
-                "data": data_str  # Mantemos a string original para o output
+                "data": data_str,  # Mantemos a string original para o output
+                "resumo": resumo,  # ANEEL não fornece resumo na listagem
+                "categoria": categoria  # Categoria genérica, pois não há detalhamento
             })
         else:
             # Opcional: Para otimizar, se a página estiver em ordem cronológica reversa
