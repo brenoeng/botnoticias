@@ -53,7 +53,7 @@ def filtrar_e_resumir_noticia(noticia, model_name=None, max_retries=3, debug=Fal
             "relevante": {"type": "boolean", "description": "True se a notícia for relevante para o Piauí em energia ou mineração."},
             "resumo": {"type": "string", "description": "Resumo curto em 1 frase."},
             "categoria": {"type": "string", "enum": ["Energia", "Mineração"], "description": "A categoria da notícia."},
-            "regiao": {"type": "string", "description": "A região mencionada na notícia, ou '-'."},
+            "regiao": {"type": "string", "description": "A região mencionada na notícia. Escolha entre: Piauí, Nordeste, Brasil, ou Mundo."},
         },
         "required": ["relevante", "resumo", "categoria", "regiao"]
     }
@@ -67,7 +67,7 @@ def filtrar_e_resumir_noticia(noticia, model_name=None, max_retries=3, debug=Fal
       "relevante": true/false,
       "resumo": "Resumo curto em 1 frase",
       "categoria": "Energia" ou "Mineração",
-      "regiao": "{noticia.get('regiao', '-')}"
+      "regiao": "Piauí" ou "Nordeste" ou "Brasil" ou "Mundo"
     }}
 
     Título: {noticia.get('titulo', '')}

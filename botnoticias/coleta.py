@@ -185,19 +185,10 @@ def coletar_noticias_por_categoria(max_por_query=5, debug=False):
                 for n in noticias_limite:
                     print(f"      📰 {n.get('titulo', 'Sem título')}")
 
-            # 🔹 Adiciona categoria e região
+            # # 🔹 Adiciona categoria e região
             for art in noticias_limite:
                 art["categoria"] = categoria
-                titulo = (art.get("titulo") or "").lower()
-                if "piauí" in titulo or "teresina" in titulo:
-                    art["regiao"] = "Piauí"
-                elif "nordeste" in titulo:
-                    art["regiao"] = "Nordeste"
-                elif "brasil" in titulo:
-                    art["regiao"] = "Brasil"
-                else:
-                    art["regiao"] = "Mundo"
-
+                art["regiao"] = "Mundo"  # Valor inicial
                 results.append(art)
 
     print(

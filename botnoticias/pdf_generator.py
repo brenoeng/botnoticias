@@ -11,15 +11,15 @@ def gerar_pdf(noticias, nome_arquivo="noticias.pdf", categoria=None):
     styles = getSampleStyleSheet()
 
     title_style = ParagraphStyle(
-        'TitleStyle', parent=styles['Title'], fontName="Times-Bold", fontSize=22, spaceAfter=20, alignment=1)
+        'TitleStyle', parent=styles['Title'], fontName="Helvetica-Bold", fontSize=22, spaceAfter=20, alignment=1)
     subtitle_style = ParagraphStyle(
-        'SubtitleStyle', parent=styles['Normal'], fontName="Times-Bold", fontSize=12, spaceAfter=30, alignment=1)
+        'SubtitleStyle', parent=styles['Normal'], fontName="Helvetica-Bold", fontSize=12, spaceAfter=30, alignment=1)
     section_style = ParagraphStyle(
-        'SectionStyle', parent=styles['Heading1'], fontName="Times-Bold", fontSize=16, spaceBefore=20, spaceAfter=10)
+        'SectionStyle', parent=styles['Heading1'], fontName="Helvetica-Bold", fontSize=16, spaceBefore=20, spaceAfter=10)
     header_style = ParagraphStyle(
         'HeaderStyle',
         parent=styles['Heading2'],
-        fontName="Times-Bold",
+        fontName="Helvetica-Bold",
         fontSize=13,
         caseChange='upper',     # 🔠 deixa tudo maiúsculo
         textColor=colors.HexColor("#007BFF")  # 🔹 Azul moderno
@@ -27,7 +27,7 @@ def gerar_pdf(noticias, nome_arquivo="noticias.pdf", categoria=None):
     body_style = ParagraphStyle(
         'BodyStyle',
         parent=styles['Normal'],
-        fontName="Times",
+        fontName="Helvetica",
         fontSize=11,
         textColor=colors.HexColor("#555555"),
         # alignment=TA_JUSTIFY
