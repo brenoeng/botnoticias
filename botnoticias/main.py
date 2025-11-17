@@ -9,7 +9,7 @@ if __name__ == "__main__":
     pasta_pdf = "relatorios"
 
     # 1️⃣ Coleta
-    noticias = coletar_noticias_por_categoria(max_por_query=5, debug=True)
+    noticias = coletar_noticias_por_categoria(max_por_query=6, debug=True)
     print(f"📥 Coletadas {len(noticias)} notícias")
 
     # 2️⃣ PDF bruto
@@ -40,13 +40,13 @@ if __name__ == "__main__":
     # 4️⃣ PDFs finais
     if energia_relevantes:
         arquivo_energia = os.path.join(
-            pasta_pdf, f"Energia_relevantes_{datetime.now().strftime('%d-%m-%Y')}.pdf")
-        gerar_pdf(energia_relevantes, f"Energia_relevantes_{datetime.now().strftime('%d-%m-%Y')}.pdf",
+            pasta_pdf, f"Notícias_Energia_relevantes_{datetime.now().strftime('%d-%m-%Y')}.pdf")
+        gerar_pdf(energia_relevantes, f"Notícias_Energia_relevantes_{datetime.now().strftime('%d-%m-%Y')}.pdf",
                   categoria="Energia")
     if mineracao_relevantes:
         arquivo_mineracao = os.path.join(
-            pasta_pdf, f"Mineracao_relevantes_{datetime.now().strftime('%d-%m-%Y')}.pdf")
-        gerar_pdf(mineracao_relevantes, f"Mineracao_relevantes_{datetime.now().strftime('%d-%m-%Y')}.pdf",
+            pasta_pdf, f"Notícias_Mineracao_relevantes_{datetime.now().strftime('%d-%m-%Y')}.pdf")
+        gerar_pdf(mineracao_relevantes, f"Notícias_Mineracao_relevantes_{datetime.now().strftime('%d-%m-%Y')}.pdf",
                   categoria="Mineração")
 
     print("✅ Concluído.")

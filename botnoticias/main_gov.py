@@ -30,9 +30,9 @@ def gerar_relatorio():
         f"Coleta concluída. Total de {len(todas_noticias)} notícias encontradas.")
 
     # 2. Gerar PDF
-    nome_arquivo = f"Relatorio_Setorial_Completo_{datetime.now().strftime('%d%m%Y')}.pdf"
+    nome_arquivo = f"Relatorio_Governo_{datetime.now().strftime('%d%m%Y')}.pdf"
     gerar_pdf(todas_noticias, nome_arquivo=nome_arquivo,
-              categoria="Energia e Petróleo")
+              categoria="Notícias Oficiais")
 
     print(f"Processo finalizado. PDF salvo como: {nome_arquivo}")
 

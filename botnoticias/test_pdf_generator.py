@@ -1,7 +1,5 @@
-# botnoticias/test_pdf_generator.py
-
-from pdf_generator import gerar_pdf
 from datetime import datetime
+from pdf_generator import gerar_pdf
 
 sample_noticias = [
     {
@@ -44,3 +42,4 @@ sample_noticias = [
 
 gerar_pdf(sample_noticias,
           nome_arquivo=f"testePDFgerar_{datetime.now().strftime('%d-%m-%Y')}.pdf", categoria="Teste")
+print("pdf gerado")

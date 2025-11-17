@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import requests
+import re
 from GoogleNews import GoogleNews
 from config import NEWS_API_KEY, GNEWS_API_KEY, LANGUAGE, QUERIES, FROM_DATE, TO_DATE
 
@@ -169,9 +170,31 @@ def coletar_noticias_por_categoria(max_por_query=5, debug=False):
 
             # 🔹 Remove duplicadas (pelo link)
             noticias_unicas = []
+            seen_links = seen  # O conjunto 'seen' rastreia links
+            seen_titles_4_words = set()  # Rastreia chaves de título de 4 palavras
             for art in noticias_query:
-                if art["link"] not in seen:
-                    seen.add(art["link"])
+                art['titulo'] = art.get('titulo', 'Sem título').strip()
+
+                # """Limpa, normaliza e retorna as 4 primeiras palavras do título como uma chave única."""
+                # Remove pontuação, acentos e caracteres especiais, converte para minúsculas
+                title = re.sub(r'[^\w\s]', '', art['titulo']).lower()
+                # Remove espaços múltiplos e divide em palavras
+                tokens = re.sub(r'\s+', ' ', title).strip().split()
+
+                # Pega as 4 primeiras palavras e junta-as. Retorna string vazia se for muito curto.
+                title_key = " ".join(
+                    tokens[:4]) if len(tokens) >= 4 else ""
+
+                # Condição de unicidade: Link não visto E (Chave de título válida E chave não vista)
+                # Note que se a chave de título for vazia (título muito curto),
+                # ela não impede a inclusão, dependendo apenas do link.
+                is_title_key_new = not title_key or (
+                    title_key not in seen_titles_4_words)
+
+                if art["link"] and art["link"] not in seen_links and is_title_key_new:
+                    seen_links.add(art["link"])
+                    if title_key:
+                        seen_titles_4_words.add(title_key)
                     noticias_unicas.append(art)
 
             # 🔹 Ordena por data e limita a 5 mais recentes

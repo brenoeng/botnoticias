@@ -1,11 +1,65 @@
+import os
+from reportlab.lib.units import inch
 from datetime import datetime
 from collections import defaultdict
 from typing import List, Dict, Optional
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+from reportlab.lib.utils import ImageReader  # Importação para a imagem
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_JUSTIFY
+
+# --- Configuração da Imagem do Template ---
+# Ajuste o caminho conforme necessário para o seu arquivo de imagem
+pasta_images = 'images'
+path = os.path.abspath(os.path.dirname(__file__))
+img_path = os.path.join(path, pasta_images, 'template.png')
+
+
+def header_footer_template(canvas, doc):
+    """Função que será chamada para desenhar o cabeçalho/rodapé em cada página,
+    incluindo a imagem de fundo/cabeçalho.
+    """
+    canvas.saveState()
+
+    page_width, page_height = A4
+
+    # --- Configurações do Template (Baseado em inseririmagem.py) ---
+    margin = 1 * inch
+
+    # 1. Desenhar a Imagem do Cabeçalho/Fundo
+    try:
+        img = ImageReader(img_path)
+
+        # Posição e dimensões para preencher a página (ajuste conforme o template)
+        # Este código do inseririmagem.py parece desenhar a imagem na página inteira
+        # ou na largura total (page_width) e altura A4[1] (altura total).
+        x_start = 0
+        y_start = 0
+
+        canvas.drawImage(
+            img,
+            x_start,
+            y_start,
+            width=page_width,
+            height=page_height,  # Usando page_height para cobrir toda a altura
+            # preserveAspectRatio=True # Descomente se quiser manter proporção
+        )
+
+    except Exception as e:
+        # Se a imagem não for encontrada, o PDF ainda será gerado.
+        print(f"Erro ao carregar imagem no template: {e}")
+
+    # 2. Desenhar um Rodapé: Número da Página
+    canvas.setFillColor(colors.white)
+    canvas.setFont("Helvetica-Bold", 11)
+    page_num_text = "%s" % doc.page
+    # Ajusta a posição para ser legível sobre o fundo/template
+    # 50 é um offset, margin/2 é a altura do rodapé
+    canvas.drawString(page_width - margin - 10, 10, page_num_text)
+
+    canvas.restoreState()
 
 
 def gerar_pdf(noticias: List[Dict], nome_arquivo: str = "relatorio_setorial.pdf", categoria: Optional[str] = None):
@@ -18,7 +72,12 @@ def gerar_pdf(noticias: List[Dict], nome_arquivo: str = "relatorio_setorial.pdf"
         nome_arquivo (str): Nome do arquivo PDF a ser gerado.
         categoria (Optional[str]): Categoria geral do relatório (ex: 'Energia').
     """
-    doc = SimpleDocTemplate(nome_arquivo, pagesize=A4)
+    # Pasta onde os PDFs serão salvos
+    pasta_pdf = "relatorios"
+    # 2. Constrói o caminho completo: "relatorios/" + nome_arquivo
+    caminho_completo = os.path.join(path, pasta_pdf, nome_arquivo)
+
+    doc = SimpleDocTemplate(caminho_completo, pagesize=A4)
     styles = getSampleStyleSheet()
 
     # --- Estilos de Parágrafo ---
@@ -117,8 +176,13 @@ def gerar_pdf(noticias: List[Dict], nome_arquivo: str = "relatorio_setorial.pdf"
                 continue
 
                 # 5. Geração final do PDF
-    doc.build(elementos)
-    print(f"✅ PDF gerado: {nome_arquivo}")
+    # Constrói o documento, passando a função do template para 'onFirstPage' e 'onLaterPages'
+    doc.build(
+        elementos,
+        onFirstPage=header_footer_template,
+        onLaterPages=header_footer_template
+    )
+    print(f"✅ PDF gerado: {caminho_completo}")
 
 
 # --- Execução de Exemplo ---
