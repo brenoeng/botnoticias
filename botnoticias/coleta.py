@@ -1,10 +1,27 @@
 from datetime import datetime, timedelta
 import requests
 import re
+from difflib import SequenceMatcher  # Importação para comparar similaridade
 from GoogleNews import GoogleNews
 from config import NEWS_API_KEY, GNEWS_API_KEY, LANGUAGE, QUERIES, FROM_DATE, TO_DATE
 
-# Funções para NewsAPI e GNews
+# --- Funções Auxiliares ---
+
+
+def verificar_similaridade(novo_titulo, lista_titulos, limite=0.85):
+    """
+    Verifica se o 'novo_titulo' é semelhante a algum item da 'lista_titulos'.
+    Retorna True se encontrar similaridade acima do limite.
+    """
+    # Normaliza para minúsculas para melhorar a comparação
+    novo_low = novo_titulo.lower()
+
+    for titulo_existente in lista_titulos:
+        ratio = SequenceMatcher(
+            None, novo_low, titulo_existente.lower()).ratio()
+        if ratio >= limite:
+            return True  # É similar (duplicado)
+    return False
 
 
 def get_newsapi(query):
@@ -21,13 +38,14 @@ def get_newsapi(query):
     }
 
     url = "https://newsapi.org/v2/everything"
-    # print("🔎 Buscando:", params["q"])
-    # print("URL gerada:", requests.Request(
-    #     "GET", url, params=params).prepare().url)
 
-    resp = requests.get(url, params=params)
-    resp.raise_for_status()
-    data = resp.json()
+    try:
+        resp = requests.get(url, params=params)
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception as e:
+        print(f"   ⚠️ Erro na API NewsAPI: {e}")
+        return []
 
     artigos = []
     for art in data.get("articles", []):
@@ -48,12 +66,14 @@ def get_gnews(query):
         f"q={query}&lang={LANGUAGE}&from={FROM_DATE}&to={TO_DATE}"
         f"&sortby=publishedAt&max=10&token={GNEWS_API_KEY}"
     )
-    # print("🔎 Buscando:", query)
-    # print("URL gerada:", url)
-    resp = requests.get(url).json()
+    try:
+        resp = requests.get(url).json()
+    except Exception as e:
+        print(f"   ⚠️ Erro na API GNews: {e}")
+        return []
+
     artigos = []
     for art in resp.get("articles", []):
-
         artigos.append({
             "fonte": art["source"]["name"],
             "titulo": art["title"],
@@ -87,47 +107,26 @@ def normalizar_data_google(date_str):
 
 
 def get_google_news(query):
-    """
-    Busca notícias usando a biblioteca GoogleNews e retorna uma lista 
-    de dicionários no mesmo formato do seu NewsAPI original.
-
-    Args:
-        query (str): O termo de busca para as notícias.
-    """
-
     try:
-        # Inicializa e configura a busca
         googlenews = GoogleNews(
             lang=LANGUAGE,
             region='BR',
             period='1d'
         )
-
-        # Faz a busca
         googlenews.search(query)
-
-        # Retorna todos os resultados encontrados
         resultados = googlenews.results()
 
-    except requests.exceptions.RequestException as e:
-        print(f"Erro ao acessar Google News: {e}")
-        return []
     except Exception as e:
-        print(f"Erro inesperado durante a busca: {e}")
+        print(f"Erro ao acessar Google News: {e}")
         return []
 
     artigos = []
     for art in resultados:
-        # A data da GoogleNews vem em formato mais amigável, mas nem sempre padronizado.
-        # Vamos tentar extrair a data e formatá-la (se necessário)
-
-        # O campo 'date' da GoogleNews é geralmente algo como "X horas atrás" ou "dd/mm/yyyy"
         data_publicacao = normalizar_data_google(art.get("date"))
         if data_publicacao == "Data desconhecida":
             continue
 
         link = art.get("link", "#") or "#"
-        # Limpa parâmetros extras (&ved, &usg, etc.)
         if "&" in link:
             link = link.split("&")[0]
 
@@ -135,24 +134,24 @@ def get_google_news(query):
             "fonte": art.get("media", "Fonte desconhecida"),
             "titulo": art.get("title", "Sem título"),
             "link": link,
-            "data": data_publicacao  # Mantemos o formato original da GoogleNews
+            "data": data_publicacao
         })
 
     print(f"  → {len(artigos)} artigos encontrados em Google News.")
-
     return artigos
 
-# Função principal para coletar todas as notícias
 
+# --- Função Principal ---
 
 def coletar_noticias_por_categoria(max_por_query=5, debug=False):
     """
-    Coleta notícias de todas as fontes para cada query configurada.
-    Limita o total a `max_por_query` notícias mais recentes por query.
-    Se debug=True, exibe os títulos das notícias selecionadas.
+    Coleta notícias de todas as fontes, removendo duplicatas por link 
+    E por similaridade de título.
     """
     results = []
-    seen = set()
+    seen_links = set()       # Conjunto para links já vistos
+    # Lista para títulos já vistos (para fuzzy matching)
+    titulos_vistos = []
 
     for categoria, queries in QUERIES.items():
         print(f"\n📡 Coletando categoria: {categoria}")
@@ -160,7 +159,7 @@ def coletar_noticias_por_categoria(max_por_query=5, debug=False):
             print(f"   🔍 Buscando por: {query}")
             noticias_query = []
 
-            # fontes de coleta
+            # Coleta das fontes
             for func in [get_newsapi, get_gnews, get_google_news]:
                 try:
                     fontes = func(query)
@@ -168,47 +167,42 @@ def coletar_noticias_por_categoria(max_por_query=5, debug=False):
                 except Exception as e:
                     print(f"   ⚠️ Erro em {func.__name__} ({query}): {e}")
 
-            # 🔹 Remove duplicadas (pelo link)
+            # 🔹 Remove duplicadas (Link exato + Título similar)
             noticias_unicas = []
-            seen_links = seen  # O conjunto 'seen' rastreia links
-            seen_titles_4_words = set()  # Rastreia chaves de título de 4 palavras
+
             for art in noticias_query:
-                art['titulo'] = art.get('titulo', 'Sem título').strip()
+                titulo_limpo = art.get('titulo', 'Sem título').strip()
+                link = art.get("link")
 
-                # """Limpa, normaliza e retorna as 4 primeiras palavras do título como uma chave única."""
-                # Remove pontuação, acentos e caracteres especiais, converte para minúsculas
-                title = re.sub(r'[^\w\s]', '', art['titulo']).lower()
-                # Remove espaços múltiplos e divide em palavras
-                tokens = re.sub(r'\s+', ' ', title).strip().split()
+                # 1. Verifica Link Exato
+                if not link or link in seen_links:
+                    continue
 
-                # Pega as 4 primeiras palavras e junta-as. Retorna string vazia se for muito curto.
-                title_key = " ".join(
-                    tokens[:4]) if len(tokens) >= 4 else ""
+                # 2. Verifica Similaridade de Título (evita repetição de mesmo assunto de sites diferentes)
+                # Se for mais de 85% similar a qualquer título já coletado (mesmo em outras queries), descarta.
+                if verificar_similaridade(titulo_limpo, titulos_vistos, limite=0.85):
+                    if debug:
+                        print(
+                            f"      ↳ Duplicata ignorada por similaridade: {titulo_limpo}")
+                    continue
 
-                # Condição de unicidade: Link não visto E (Chave de título válida E chave não vista)
-                # Note que se a chave de título for vazia (título muito curto),
-                # ela não impede a inclusão, dependendo apenas do link.
-                is_title_key_new = not title_key or (
-                    title_key not in seen_titles_4_words)
+                # Se passou nos filtros, adiciona
+                seen_links.add(link)
+                titulos_vistos.append(titulo_limpo)
+                noticias_unicas.append(art)
 
-                if art["link"] and art["link"] not in seen_links and is_title_key_new:
-                    seen_links.add(art["link"])
-                    if title_key:
-                        seen_titles_4_words.add(title_key)
-                    noticias_unicas.append(art)
-
-            # 🔹 Ordena por data e limita a 5 mais recentes
+            # 🔹 Ordena por data e limita a quantidade por query
             noticias_unicas.sort(key=lambda n: n.get("data", ""), reverse=True)
             noticias_limite = noticias_unicas[:max_por_query]
 
             print(
-                f"   → Mantendo {len(noticias_limite)} notícias da query '{query}'")
+                f"   → Mantendo {len(noticias_limite)} notícias únicas da query '{query}'")
 
             if debug:
                 for n in noticias_limite:
                     print(f"      📰 {n.get('titulo', 'Sem título')}")
 
-            # # 🔹 Adiciona categoria e região
+            # Adiciona categoria e metadados finais
             for art in noticias_limite:
                 art["categoria"] = categoria
                 art["regiao"] = "Mundo"  # Valor inicial
